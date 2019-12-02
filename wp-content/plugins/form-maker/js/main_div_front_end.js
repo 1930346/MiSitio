@@ -11,7 +11,10 @@ jQuery(document).ready(function () {
   // Scroll to form notice.
   if ( jQuery(".fm-form").find(".fm-message").length !== 0) {
     jQuery(window).scrollTop(jQuery(".fm-message").offset().top - 100);
-    document.scrollingElement.scrollTop = jQuery(".fm-message").offset().top - 100; /* For Safari.*/
+      var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
+      if( is_safari ) {
+          document.scrollingElement.scrollTop = jQuery(".fm-message").offset().top - 100; / For Safari./
+      }
   }
 
   // Scroll to captcha field notice.
@@ -29,7 +32,7 @@ jQuery(document).ready(function () {
 jQuery(window).on("load", function () {
   if (jQuery(".g-recaptcha").length > 0) {
     if (jQuery(".g-recaptcha").data("render") != 1) {
-      fmRecaptchaInit();
+      fmRecaptchaInit( 0 );
     }
   }
 });
@@ -1788,6 +1791,15 @@ function fm_submit_form(form_id) {
   }
 }
 
+function getHostName(url) {
+  var match = url.match(/:\/\/(www[0-9]?\.)?(.[^/:]+)/i);
+  if (match != null && match.length > 2 && typeof match[2] === 'string' && match[2].length > 0) {
+    return match[2];
+  }
+  else {
+    return null;
+  }
+}
 function fm_submit(form_id) {
   fm_set_input_value('fm_empty_field_validation' + form_id, jQuery('#fm_empty_field_validation' + form_id).attr('data-value') );
   var ajax_submit = jQuery("#form" + form_id + " .button-submit").attr("data-ajax");
@@ -1805,22 +1817,37 @@ function fm_submit(form_id) {
       contentType: false,
       processData: false,
       success: function(response) {
+        if ( after_submit_redirect_url != 0 ) {
+          window.location.replace(after_submit_redirect_url);
+          return;
+        }
         jQuery("#form" + form_id + " .button-submit").removeAttr("disabled");
         jQuery('#form'+form_id+' .fm-submit-loading').hide();
         var result = jQuery(response).find('#form'+form_id).html();
         jQuery('#form'+form_id).html(result);
+        if (jQuery(document).find(".g-recaptcha").length > 0) {
+            fmRecaptchaInit(1);
+        }
+
         var fm_func_name = 'fm_script_ready' + form_id;
         if ( typeof( window[fm_func_name] ) !== 'undefined' ) {
           window[fm_func_name]();
         }
 
         var error = false;
-        if(jQuery(result).find('.fm-not-filled.message_captcha').length > 0 || jQuery(result).find('.fm-notice-error').length > 0 || result.indexOf('class="fm-message fm-notice-error"') > -1) {
+        if(jQuery(result).find('.fm-not-filled.message_captcha').length > 0 || jQuery(result).find('.fm-notice-error').length > 0 || (typeof result != 'undefined' && result.indexOf('class="fm-message fm-notice-error"') > -1)) {
           error = true;
         }
 
-        if ( after_submit_redirect_url != 0 && !error) {
-          window.location.replace(after_submit_redirect_url);
+        if ( after_submit_redirect_url != 0 ) {
+          var domain = document.domain;
+          var redirect_hostname = getHostName(after_submit_redirect_url);
+          if( domain == redirect_hostname ) {
+            window.location.href = after_submit_redirect_url;
+          } else {
+            jQuery('#form'+form_id+' .fm-message').remove();
+            jQuery('#form'+form_id).prepend('<div class="fm-message fm-notice-error">Form submitted successfully done, but there is a problem with redirection.</div>')
+          }
         }
       },
       complete: function() {
@@ -2208,19 +2235,26 @@ function fm_check(id, form_id, all_pages) {
   return true;
 }
 
-function fmRecaptchaInit() {
+function fmRecaptchaInit( already_rendered ) {
+  if (already_rendered === undefined) {
+    already_rendered = 0;
+  }
   jQuery(".g-recaptcha").each(function () {
     type = jQuery(this).attr('data-size');
     jQuery(this).attr("data-render", 1);
     if (type == 'invisible') {
       form_id = jQuery(this).attr('data-form_id');
-      grecaptcha.render(jQuery(this).attr('id'), {
-        'sitekey': jQuery(this).attr('data-sitekey'),
-        'badge' : jQuery(this).attr('data-badge'),
-        'callback': function () {
-          fm_submit(form_id);
-        }
-      });
+      if( !already_rendered ) {
+        grecaptcha.render(jQuery(this).attr('id'), {
+          'sitekey': jQuery(this).attr('data-sitekey'),
+          'badge': jQuery(this).attr('data-badge'),
+          'callback': function () {
+            fm_submit(form_id);
+          }
+        });
+      } else {
+        grecaptcha.reset();
+      }
     }
     else if(type == 'v3') {
       if(jQuery(this).attr('data-sitekey') == "undefined" || jQuery(this).attr('data-sitekey') == "") return;
@@ -2234,10 +2268,14 @@ function fmRecaptchaInit() {
         });
       });
     } else {
-      grecaptcha.render(jQuery(this).attr('id'), {
-        'sitekey': jQuery(this).attr('data-sitekey'),
-        'theme': 'light'
-      })
+      if( !already_rendered ) {
+        grecaptcha.render(jQuery(this).attr('id'), {
+          'sitekey': jQuery(this).attr('data-sitekey'),
+          'theme': 'light'
+        });
+      } else {
+        grecaptcha.reset();
+      }
     }
   });
 }

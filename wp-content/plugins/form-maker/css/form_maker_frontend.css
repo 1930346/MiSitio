@@ -1075,6 +1075,7 @@ div[type="type_slider"] .label {
 }
 .fm-form-builder .wdform_row {
 	flex: 1;
+	max-width: 100%;
 }
 .wdform_column {
 	display: flex;

@@ -1192,13 +1192,13 @@ function after_submit() {
     $title = WDW_FM_Library(self::PLUGIN)->get('title', '');
 
     $form_front = WDW_FM_Library(self::PLUGIN)->get('form_front', '', false);
-    $form_front = urldecode(base64_decode($form_front));
+    $form_front = html_entity_decode(base64_decode($form_front));
 
     $sortable = WDW_FM_Library(self::PLUGIN)->get('sortable', 0);
     $counter = WDW_FM_Library(self::PLUGIN)->get('counter', 0);
 
     $label_order = WDW_FM_Library(self::PLUGIN)->get('label_order', '');
-    $label_order = urldecode(base64_decode($label_order));
+    $label_order = html_entity_decode(base64_decode($label_order));
 
     $pagination = WDW_FM_Library(self::PLUGIN)->get('pagination', '');
     $show_title = WDW_FM_Library(self::PLUGIN)->get('show_title', '');
@@ -1209,10 +1209,10 @@ function after_submit() {
     $recaptcha_theme = WDW_FM_Library(self::PLUGIN)->get('recaptcha_theme', '');
 
     $label_order_current = WDW_FM_Library(self::PLUGIN)->get('label_order_current', '');
-    $label_order_current = urldecode(base64_decode($label_order_current));
+    $label_order_current = html_entity_decode(base64_decode($label_order_current));
 
     $form_fields = WDW_FM_Library(self::PLUGIN)->get('form_fields', '', false);
-    $form_fields = urldecode(base64_decode($form_fields));
+    $form_fields = html_entity_decode(base64_decode($form_fields));
 
     $header_title = WDW_FM_Library(self::PLUGIN)->get('header_title', '');
     $header_description = WDW_FM_Library(self::PLUGIN)->get('header_description', '', FALSE);

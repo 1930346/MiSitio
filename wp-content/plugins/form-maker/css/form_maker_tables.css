@@ -1507,7 +1507,7 @@ table.admintable {
 .submit_content #submitsubmitdate_fc,
 .submit_content #submitterusername_fc,
 .submit_content #submitteremail_fc {
-	min-width: 170px;
+	min-width: 175px;
 }
 
 .submitid_fc {

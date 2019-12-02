@@ -13,6 +13,8 @@ class FMModelForm_maker {
 
   public $custom_fields = array();
 
+  public $fm_ajax_submit;
+
   /**
    * @param int $id
    * @param string $type
@@ -70,9 +72,7 @@ class FMModelForm_maker {
     $fm_style_dir = $wp_upload_dir[ 'basedir' ] . $frontend_dir . 'css/fm-style-' . $theme_id . '.css';
     $fm_style_url = $front_urls[ 'upload_url' ] . $frontend_dir . 'css/fm-style-' . $theme_id . '.css';
 
-
-
-	if (!file_exists($fm_style_dir)) {
+	  if (!file_exists($fm_style_dir)) {
       if ( function_exists('wp_add_inline_style') ) {
         wp_add_inline_style(WDFMInstance(self::PLUGIN)->handle_prefix . '-frontend', $this->fm_css_content);
       } else {
@@ -657,6 +657,20 @@ class FMModelForm_maker {
         ((isset( $form_theme[ 'IPBorderRadius' ] ) && $form_theme[ 'IPBorderRadius' ] !== '') ? 'border-radius:' . $form_theme[ 'IPBorderRadius' ] . 'px !important;' : '') .
         (!empty( $form_theme[ 'IPBoxShadow' ] ) ? 'box-shadow:' . $form_theme[ 'IPBoxShadow' ] . ';' : '') .
         '}';
+        $css_content .= '.fm-form-container.fm-theme' . $theme_id . ' .fm-form input[type="text"]::placeholder,
+              .fm-form-container.fm-theme' . $theme_id . ' .fm-form .ui-corner-all::placeholder,
+              .fm-form-container.fm-theme' . $theme_id . ' .fm-form input[type="number"]::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form input[type=password]::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form input[type=url]::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form input[type=email]::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form textarea::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form .StripeElement::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form .ui-spinner-input::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form .file-upload-status::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form .country-name::placeholder,
+						 .fm-form-container.fm-theme' . $theme_id . ' .fm-form select::placeholder {' .
+            (!empty( $form_theme[ 'IPColor' ] ) ? 'color:' . $form_theme[ 'IPColor' ] . '; opacity:0.5;' : '') .
+            '}';
 	  $css_content .= '.fm-form-container.fm-theme' . $theme_id . ' .fm-form .ui-slider-range {' .
         ((isset( $form_theme[ 'IPBorderRadius' ] ) && $form_theme[ 'IPBorderRadius' ] !== '') ? 'border-radius:' . $form_theme[ 'IPBorderRadius' ] . 'px 0 0 ' . $form_theme[ 'IPBorderRadius' ] . 'px !important;' : '') .
         '}';
@@ -812,6 +826,7 @@ class FMModelForm_maker {
         (!empty( $form_theme[ 'SPColor' ] ) ? 'color:' . $form_theme[ 'SPColor' ] . ' !important;' : '') .
         (!empty( $form_theme[ 'SPBoxShadow' ] ) ? 'box-shadow:' . $form_theme[ 'SPBoxShadow' ] . ' !important;' : '') .
         ((isset( $form_theme[ 'SPBorderRadius' ] ) && $form_theme[ 'SPBorderRadius' ] !== '') ? 'border-radius:' . $form_theme[ 'SPBorderRadius' ] . 'px !important;' : '') .
+        'max-width:100%' .
         '}';
       if ( !empty( $form_theme[ 'SPBorderType' ] ) && ($form_theme[ 'SPBorderType' ] == 'none' || $form_theme[ 'SPBorderType' ] == 'inherit' || $form_theme[ 'SPBorderType' ] == 'initial') ) {
         $css_content .= '.fm-form-container.fm-theme' . $theme_id . ' .fm-form .button-submit {' . 'border: ' . $form_theme['SPBorderType'] . '}';
@@ -1114,11 +1129,11 @@ class FMModelForm_maker {
    * @return array|mixed
    */
   public function savedata( $form = 0, $id = 0 ) {
+    $this->fm_ajax_submit = $form->fm_ajax_submit;
     if ( !isset( $_POST[ "save_or_submit" . $id ] ) || !isset( $_POST[ "counter" . $id ] ) ) {
       // If removed special field.
       return;
     }
-
 	  WDFMInstance(self::PLUGIN)->fm_form_nonce = sprintf( WDFMInstance(self::PLUGIN)->fm_form_nonce, $id );
 
     $id_for_old = $id;
@@ -1291,10 +1306,12 @@ class FMModelForm_maker {
   }
 
   public function check_ip($id) {
+    WDW_FM_Library(self::PLUGIN)->start_session();
     global $wpdb;
     $blocked_ip = $wpdb->get_var( $wpdb->prepare( 'SELECT * FROM ' . $wpdb->prefix . 'formmaker_blocked WHERE ip="%s"', $_SERVER['REMOTE_ADDR'] ) );
     if ( $blocked_ip ) {
       $_SESSION[ 'massage_after_submit' . $id ] = addslashes( __( 'Your ip is blacklisted. Please contact the website administrator.', WDFMInstance(self::PLUGIN)->prefix ) );
+      $_SESSION[ 'error_or_no' . $id ] = 1;
       // Add query arg to url to display message on cached pages.
       $redirect_url = add_query_arg( array( 'succes' => time() ), $_SERVER["REQUEST_URI"] );
       wp_redirect( $redirect_url );
@@ -1508,7 +1525,7 @@ class FMModelForm_maker {
             if ( $required && !isset( $_POST[ 'wdform_' . $i . "_element" . $id ] ) ) {
               $missing_required_field = TRUE;
             }
-            if ( !WDW_FM_Library(self::PLUGIN)->email_validation($value) ) {
+            if ( !WDW_FM_Library(self::PLUGIN)->is_email($value) ) {
               $invalid_email_address = TRUE;
             }
             break;
@@ -2483,7 +2500,7 @@ class FMModelForm_maker {
         }
       }
 
-      $frontend_parmas['user_email'] = ( WDW_FM_Library(self::PLUGIN)->email_validation($user_email) !== FALSE ) ? $user_email : '';
+      $frontend_parmas['user_email'] = WDW_FM_Library(self::PLUGIN)->is_email($user_email) ? $user_email : '';
       do_action( 'fm_addon_frontend_init', $frontend_parmas );
     }
     $return_value = array( 'group_id' => $group_id, 'all_files' => $all_files, 'redirect_url' => $str );
@@ -2679,6 +2696,7 @@ class FMModelForm_maker {
         $all_file[ 'tmp_name' ] = $destination . "/" . $fileName;
       }
     }
+
     $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . $wpdb->prefix . "formmaker WHERE id=%d", $id ) );
     if ( !$row->form_front ) {
       $id = '';
@@ -3564,12 +3582,14 @@ class FMModelForm_maker {
         $_SESSION[ 'fm_hide_form_after_submit' . $id ] = 1;
       }
     }
-
     // Add query arg to url to display message on cached pages.
     $redirect_url = add_query_arg( array( 'succes' => time() ), $redirect_url );
 
     if ( !$str ) {
-      wp_redirect( html_entity_decode( $redirect_url ) );
+      if( !$this->fm_ajax_submit || $row->submit_text_type != 4 ) {
+        wp_redirect( html_entity_decode( $redirect_url ) );
+      }
+
       exit;
     }
     else {

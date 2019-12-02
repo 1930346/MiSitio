@@ -17,6 +17,7 @@ class FMViewForm_maker {
    * @param $model
    */
   private $fm_nonce = null;
+
   public function __construct( $model = array() ) {
     $this->fm_nonce = wp_create_nonce('fm_ajax_nonce');
     $this->model = $model;
@@ -33,11 +34,11 @@ class FMViewForm_maker {
    * @return string
    */
   public function display( $result = array(), $fm_settings = array(), $form_id = 0, $formType = 'embedded' ) {
-	WDFMInstance(self::PLUGIN)->fm_form_nonce = sprintf( WDFMInstance(self::PLUGIN)->fm_form_nonce, $form_id );
-	if ( $form_id ) {
-		WDW_FM_Library(self::PLUGIN)->start_session();
-		$_SESSION['fm_empty_field_validation' . $form_id] = md5(uniqid(rand(), TRUE));
-	}
+    WDFMInstance(self::PLUGIN)->fm_form_nonce = sprintf( WDFMInstance(self::PLUGIN)->fm_form_nonce, $form_id );
+    if ( $form_id ) {
+      WDW_FM_Library(self::PLUGIN)->start_session();
+      $_SESSION['fm_empty_field_validation' . $form_id] = md5(uniqid(rand(), TRUE));
+    }
 
     if ( $fm_settings['fm_developer_mode'] ) {
       wp_enqueue_style(WDFMInstance(self::PLUGIN)->handle_prefix . '-icons', WDFMInstance(self::PLUGIN)->plugin_url . '/css/fonts.css', array(), '1.0.1');
@@ -160,9 +161,13 @@ class FMViewForm_maker {
       $form_maker_front_end .= '<input type="hidden" id="fm_ajax_url' . $form_id.'" data-ajax_url="'. $form_submit_url .'" />';
       if($row->submit_text_type == 1 || $row->submit_text_type == 3) {
         $action_after_sub = 0;
-      } else {
+      } elseif( $row->submit_text_type == 4 && $row->url ) {
+        $action_after_sub = $row->url;
+      }
+      else {
         $action_after_sub = $row->article_id;
       }
+
       $form_maker_front_end .= '<input type="hidden" id="fm_ajax_redirect_url' . $form_id.'" data-ajax_redirect_url="'. $action_after_sub .'" />';
     }
     $form_maker_front_end .= $this->get_nonce_field();
@@ -277,7 +282,7 @@ class FMViewForm_maker {
               $param[$params_name] = $temp[0];
               $temp = $temp[1];
             }
-            $rep = '<div type="type_editor" class="wdform-field">' . html_entity_decode($param['w_editor']) . '</div>';
+            $rep = '<div type="type_editor" class="wdform-field">' . html_entity_decode(do_shortcode($param['w_editor'])) . '</div>';
             break;
           }
           case 'type_send_copy': {
@@ -1795,16 +1800,16 @@ class FMViewForm_maker {
    * @return string
    */
   public function autoload_form( $params = array() ) {
-	$id = $params['id'];
-	$type = $params['type'];
-	$form = $params['form'];
-	$display_on_this = $params['display_on_this'];
-	$show_for_admin = $params['show_for_admin'];
-	$form_result = $params['form_result'];
-	$fm_settings = $params['fm_settings'];
-	$error = $params['error'];
-	$message = $params['message'];
-	$onload_js = '';
+    $id = $params['id'];
+    $type = $params['type'];
+    $form = $params['form'];
+    $display_on_this = $params['display_on_this'];
+    $show_for_admin = $params['show_for_admin'];
+    $form_result = $params['form_result'];
+    $fm_settings = $params['fm_settings'];
+    $error = $params['error'];
+    $message = $params['message'];
+    $onload_js = '';
     $fm_form = '';
     switch ($type) {
       case 'topbar': {
@@ -2166,7 +2171,7 @@ class FMViewForm_maker {
    */
    function type_checkbox( $params = array(), $row = array(), $form_id = 0, $id1 = 0, $type = '', $param = array() ) {
     //ToDo custom_fields add to params array key next version.
-     $custom_fields = $this->get_custom_fields();
+     $custom_fields = WDW_FM_Library::get_custom_fields();
      $select_data_from_db = TRUE;
      if ( !empty($param['reset_fields']) && in_array($id1, $param['reset_fields']) ){
        $select_data_from_db = FALSE;
@@ -2338,7 +2343,7 @@ class FMViewForm_maker {
    */
    function type_radio( $params = array(), $row = array(), $form_id = 0, $id1 = 0, $type = '', $param = array() ) {
     //ToDo custom_fields add to params array key next version.
-    $custom_fields = $this->get_custom_fields();
+    $custom_fields = WDW_FM_Library::get_custom_fields();
     $select_data_from_db = TRUE;
     if ( !empty($param['reset_fields']) && in_array($id1, $param['reset_fields']) ){
       $select_data_from_db = FALSE;
@@ -2519,7 +2524,7 @@ class FMViewForm_maker {
    */
   function type_own_select( $params = array(), $row = array(), $form_id = 0, $id1 = 0, $type = '', $param = array() ) {
     //ToDo custom_fields add to params array key next version.
-    $custom_fields = $this->get_custom_fields();
+    $custom_fields = WDW_FM_Library::get_custom_fields();
     $select_data_from_db = TRUE;
     if ( !empty($param['reset_fields']) && in_array($id1, $param['reset_fields']) ){
       $select_data_from_db = FALSE;
@@ -3866,31 +3871,6 @@ class FMViewForm_maker {
     ?><div class="<?php echo implode(' ', $classes); ?>" <?php echo ($param['w_size'] != '' ? 'style="max-width: ' . $param['w_size'] . 'px;"' : ''); ?>><?php echo $html; ?></div><?php
 
     return ob_get_clean();
-  }
-
-  /**
-   * Get custom fields
-   * @return array
-   */
- private function get_custom_fields() {
-	$userid = '';
-	$username = '';
-	$useremail = '';
-	$adminemail = get_option( 'admin_email' );
-	$current_user = wp_get_current_user();
-	if ( $current_user->ID != 0 ) {
-	  $userid = $current_user->ID;
-	  $username = $current_user->display_name;
-	  $useremail = $current_user->user_email;
-	}
-	$custom_fields = array(
-		"ip" => $_SERVER['REMOTE_ADDR'],
-		"userid" => $userid,
-		'adminemail' => $adminemail,
-		"useremail" => $useremail,
-		"username" => $username
-	);
-	return $custom_fields;
   }
 
   /**

@@ -294,7 +294,7 @@ function FormManageSubmitButton(check_for_changes) {
     }
   }
   if (!check_for_changes) {
-    document.getElementById('label_order_current').value = btoa(encodeURI(tox));
+    document.getElementById('label_order_current').value = btoa(fm_htmlentities(tox));
   }
 
   for (x = 0; x < l_id_array.length; x++) {
@@ -303,8 +303,8 @@ function FormManageSubmitButton(check_for_changes) {
     }
   }
   if (!check_for_changes) {
-    document.getElementById('label_order').value = btoa(encodeURI(tox));
-    document.getElementById('form_fields').value = btoa(encodeURI(form_fields));
+    document.getElementById('label_order').value = btoa(fm_htmlentities(tox));
+    document.getElementById('form_fields').value = btoa(fm_htmlentities(form_fields));
     refresh_();
     document.getElementById('pagination').value = document.getElementById('pages').getAttribute("type");
     document.getElementById('show_title').value = document.getElementById('pages').getAttribute("show_title");
@@ -336,7 +336,13 @@ function FormManageSubmitButton(check_for_changes) {
   }
   return !check_for_changes || !form_changed;
 }
-	
+function fm_htmlentities(s){
+  var div = document.createElement('div');
+  var text = document.createTextNode(s);
+  div.style.cssText = "display:none";
+  div.appendChild(text);
+  return div.innerHTML;
+}
 function formOnload(rows) {
 	for (t = 0; t < rows; t++) {
 		if (document.getElementById(t + "_typeform_id_temp")) {

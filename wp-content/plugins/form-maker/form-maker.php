@@ -3,7 +3,7 @@
  * Plugin Name: Form Maker
  * Plugin URI: https://10web.io/plugins/wordpress-form-maker/?utm_source=form_maker&utm_medium=free_plugin
  * Description: This plugin is a modern and advanced tool for easy and fast creating of a WordPress Form. The backend interface is intuitive and user friendly which allows users far from scripting and programming to create WordPress Forms.
- * Version: 1.13.22
+ * Version: 1.13.24
  * Author: 10Web Form Builder Team
  * Author URI: https://10web.io/plugins/?utm_source=form_maker&utm_medium=free_plugin
  * License: GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
@@ -98,8 +98,8 @@ final class WDFM {
     $this->plugin_url = plugins_url(plugin_basename(dirname(__FILE__)));
     $this->front_urls = $this->get_front_urls();
     $this->main_file = plugin_basename(__FILE__);
-    $this->plugin_version = '1.13.22';
-    $this->db_version = '2.13.22';
+    $this->plugin_version = '1.13.24';
+    $this->db_version = '2.13.24';
     $this->menu_postfix = ($this->is_free == 2 ? '_fmc' : '_fm');
     $this->plugin_postfix = ($this->is_free == 2 ? '_fmc' : '');
     $this->menu_slug = 'manage' . $this->menu_postfix;
@@ -202,6 +202,8 @@ final class WDFM {
 
     // Plugin activation.
     register_activation_hook(__FILE__, array($this, 'global_activate'));
+	  // Plugin deactivate.
+    register_deactivation_hook( __FILE__, array($this, 'global_deactivate'));
     add_action('wpmu_new_blog', array($this, 'new_blog_added'), 10, 6);
 
     if ( (!isset($_GET['action']) || $_GET['action'] != 'deactivate')
@@ -863,7 +865,7 @@ final class WDFM {
 
     $allowed_pages = array(
       'form_submissions',
-	  'form_maker',
+	    'form_maker',
     );
     $allowed_actions = array(
       'frontend_generate_xml',
@@ -872,7 +874,7 @@ final class WDFM {
       'frontend_show_matrix',
       'frontend_show_map',
       'get_frontend_stats',
-	  'fm_reload_input',
+	    'fm_reload_input',
     );
 
     if ( wp_verify_nonce($ajax_nonce , 'fm_ajax_nonce') == FALSE ) {
@@ -931,7 +933,7 @@ final class WDFM {
     }
     else {
       $id = WDW_FM_Library(self::PLUGIN)->get('wdform_id', 0);
-	    $display_options = WDW_FM_Library(self::PLUGIN)->display_options( $id );
+	  $display_options = WDW_FM_Library(self::PLUGIN)->display_options( $id );
       $type = $display_options->type;
       $attrs = array( 'id' => $id );
       if ($type == "embedded") {
@@ -1054,7 +1056,7 @@ final class WDFM {
    */
   public function register_frontend_scripts() {
     $fm_settings = $this->fm_settings;
-    $front_plugin_url = $this->front_urls['plugin_url'];
+	$front_plugin_url = $this->front_urls['plugin_url'];
 
     $required_scripts = array(
       'jquery',
@@ -1078,10 +1080,7 @@ final class WDFM {
     wp_register_style($this->handle_prefix . '-phone_field_css', $front_plugin_url . '/css/intlTelInput.css', array(), $this->plugin_version);
 
     wp_register_script($this->handle_prefix . '-gmap_form', $front_plugin_url . '/js/if_gmap_front_end.js', array('google-maps'), $this->plugin_version);
-
-    $google_fonts = WDW_FM_Library(self::PLUGIN)->get_google_fonts();
-    $fonts = implode("|", str_replace(' ', '+', $google_fonts));
-    wp_register_style($this->handle_prefix . '-googlefonts', 'https://fonts.googleapis.com/css?family=' . $fonts . '&subset=greek,latin,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic', null, null);
+	wp_register_style($this->handle_prefix . '-googlefonts', WDW_FM_Library(self::PLUGIN)->get_all_used_google_fonts(), null, null);
 
     wp_register_script($this->handle_prefix . '-g-recaptcha', 'https://www.google.com/recaptcha/api.js?onload=fmRecaptchaInit&render=explicit');
     if ( isset($fm_settings['public_key']) ) {
@@ -1206,7 +1205,44 @@ final class WDFM {
       WDFMInsert::install_demo_forms();
     }
     $this->init();
-    flush_rewrite_rules();
+	// Using this insted of flush_rewrite_rule() for better performance with multisite.
+    global $wp_rewrite;
+    $wp_rewrite->init();
+    $wp_rewrite->flush_rules();
+  }
+
+    /**
+   * Global deactivate.
+   *
+   * @param $networkwide
+   */
+  public function global_deactivate($networkwide) {
+    if ( function_exists('is_multisite') && is_multisite() ) {
+      if ( $networkwide ) {
+        global $wpdb;
+        // Check if it is a network activation - if so, run the activation function for each blog id.
+        // Get all blog ids.
+        $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+        foreach ( $blogids as $blog_id ) {
+          switch_to_blog($blog_id);
+          $this->deactivate();
+          restore_current_blog();
+        }
+
+        return;
+      }
+    }
+    $this->deactivate();
+  }
+
+  /**
+   * Deactivate.
+   */
+  public function deactivate() {
+    // Using this insted of flush_rewrite_rule() for better performance with multisite.
+    global $wp_rewrite;
+    $wp_rewrite->init();
+    $wp_rewrite->flush_rules();
   }
 
   /**

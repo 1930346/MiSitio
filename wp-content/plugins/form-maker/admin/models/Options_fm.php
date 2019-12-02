@@ -10,17 +10,17 @@ class FMModelOptions_fm extends FMAdminModel {
   public function save_db() {
     $option_key = WDFMInstance(self::PLUGIN)->handle_prefix . '_settings';
     $fm_settings = WDFMInstance(self::PLUGIN)->fm_settings;
-    $public_key = WDW_FM_Library(self::PLUGIN)->get('public_key', '');
-    $private_key = WDW_FM_Library(self::PLUGIN)->get('private_key', '');
-    $recaptcha_score = WDW_FM_Library(self::PLUGIN)->get('recaptcha_score', '');
-    $csv_delimiter = (isset($_POST['csv_delimiter']) && $_POST['csv_delimiter'] != '' ? esc_html(stripslashes($_POST['csv_delimiter'])) : ',');
+    $public_key = WDW_FM_Library(self::PLUGIN)->get('public_key', '', 'sanitize_text_field');
+    $private_key = WDW_FM_Library(self::PLUGIN)->get('private_key', '', 'sanitize_text_field');
+    $recaptcha_score = WDW_FM_Library(self::PLUGIN)->get('recaptcha_score', '', 'sanitize_text_field');
+    $csv_delimiter = WDW_FM_Library(self::PLUGIN)->get('csv_delimiter') != '' ? WDW_FM_Library(self::PLUGIN)->get('csv_delimiter','','sanitize_text_field') : ',';
     $fm_shortcode = (isset($_POST['fm_shortcode']) ? "old" : '');
-    $fm_advanced_layout = WDW_FM_Library(self::PLUGIN)->get('fm_advanced_layout', '0');
-    $fm_enable_wp_editor = WDW_FM_Library(self::PLUGIN)->get('fm_enable_wp_editor', '1');
-    $fm_antispam = WDW_FM_Library(self::PLUGIN)->get('fm_antispam', '0');
-    $fm_ajax_submit = WDW_FM_Library(self::PLUGIN)->get('fm_ajax_submit', '0');
-    $fm_developer_mode = WDW_FM_Library(self::PLUGIN)->get('fm_developer_mode', '0');
-    $map_key = WDW_FM_Library(self::PLUGIN)->get('map_key', '');
+    $fm_advanced_layout = WDW_FM_Library(self::PLUGIN)->get('fm_advanced_layout', '0', 'sanitize_text_field');
+    $fm_enable_wp_editor = WDW_FM_Library(self::PLUGIN)->get('fm_enable_wp_editor', '1', 'sanitize_text_field');
+    $fm_antispam = WDW_FM_Library(self::PLUGIN)->get('fm_antispam', '0', 'sanitize_text_field');
+    $fm_ajax_submit = WDW_FM_Library(self::PLUGIN)->get('fm_ajax_submit', '0', 'sanitize_text_field');
+    $fm_developer_mode = WDW_FM_Library(self::PLUGIN)->get('fm_developer_mode', '0', 'sanitize_text_field');
+    $map_key = WDW_FM_Library(self::PLUGIN)->get('map_key', '', 'sanitize_text_field');
 	  update_option( $option_key, array(
       'public_key' => $public_key,
       'private_key' => $private_key,

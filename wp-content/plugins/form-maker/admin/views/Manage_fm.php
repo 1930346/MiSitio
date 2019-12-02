@@ -2097,7 +2097,7 @@ class FMViewManage_fm extends FMAdminView {
                   <?php
                   foreach ($field as $button) {
                     ?>
-                    <button class="wd-button button-secondary" onclick="wd_insert_placeholder(jQuery('.placeholders-active .dashicons-list-view').data('id'), '<?php echo $button['value']; ?>'); return false;" data-type="">
+                    <button id="fm-placeholder-<?php echo $button['value']; ?>" class="wd-button button-secondary fm-placeholder-item" onclick="wd_insert_placeholder(jQuery('.placeholders-active .dashicons-list-view').data('id'), '<?php echo $button['value']; ?>'); return false;" data-type="">
                       <?php echo $button['title']; ?>
                     </button>
                     <?php

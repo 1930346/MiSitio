@@ -369,7 +369,7 @@ class WDW_FM_Library {
    *
    * @return string|array
    */
-  public static function get($key, $default_value = '', $esc_html = true) {
+  public static function get($key, $default_value = '', $callback = '') {
     if (isset($_GET[$key])) {
       $value = $_GET[$key];
     }
@@ -383,10 +383,10 @@ class WDW_FM_Library {
       $value = $default_value;
     }
     if (is_array($value)) {
-      array_walk_recursive($value, array('self', 'validate_data'), $esc_html);
+      array_walk_recursive($value, array('self', 'validate_data'), $callback);
     }
     else {
-      self::validate_data($value, $esc_html);
+      self::validate_data($value, 0, $callback);
     }
     return $value;
   }
@@ -397,10 +397,10 @@ class WDW_FM_Library {
    * @param $value
    * @param $esc_html
    */
-  private static function validate_data(&$value, $esc_html) {
+  private static function validate_data(&$value, $key, $callback) {
     $value = stripslashes($value);
-    if ($esc_html) {
-      $value = esc_html($value);
+    if (!empty($callback) && function_exists($callback)) {
+      $value = $callback($value);
     }
   }
 
@@ -888,6 +888,46 @@ class WDW_FM_Library {
   public static function get_google_fonts() {
     $google_fonts = array( 'Open Sans' => 'Open Sans', 'Oswald' => 'Oswald', 'Droid Sans' => 'Droid Sans', 'Lato' => 'Lato', 'Open Sans Condensed' => 'Open Sans Condensed', 'PT Sans' => 'PT Sans', 'Ubuntu' => 'Ubuntu', 'PT Sans Narrow' => 'PT Sans Narrow', 'Yanone Kaffeesatz' => 'Yanone Kaffeesatz', 'Roboto Condensed' => 'Roboto Condensed', 'Source Sans Pro' => 'Source Sans Pro', 'Nunito' => 'Nunito', 'Francois One' => 'Francois One', 'Roboto' => 'Roboto', 'Raleway' => 'Raleway', 'Arimo' => 'Arimo', 'Cuprum' => 'Cuprum', 'Play' => 'Play', 'Dosis' => 'Dosis', 'Abel' => 'Abel', 'Droid Serif' => 'Droid Serif', 'Arvo' => 'Arvo', 'Lora' => 'Lora', 'Rokkitt' => 'Rokkitt', 'PT Serif' => 'PT Serif', 'Bitter' => 'Bitter', 'Merriweather' => 'Merriweather', 'Vollkorn' => 'Vollkorn', 'Cantata One' => 'Cantata One', 'Kreon' => 'Kreon', 'Josefin Slab' => 'Josefin Slab', 'Playfair Display' => 'Playfair Display', 'Bree Serif' => 'Bree Serif', 'Crimson Text' => 'Crimson Text', 'Old Standard TT' => 'Old Standard TT', 'Sanchez' => 'Sanchez', 'Crete Round' => 'Crete Round', 'Cardo' => 'Cardo', 'Noticia Text' => 'Noticia Text', 'Judson' => 'Judson', 'Lobster' => 'Lobster', 'Unkempt' => 'Unkempt', 'Changa One' => 'Changa One', 'Special Elite' => 'Special Elite', 'Chewy' => 'Chewy', 'Comfortaa' => 'Comfortaa', 'Boogaloo' => 'Boogaloo', 'Fredoka One' => 'Fredoka One', 'Luckiest Guy' => 'Luckiest Guy', 'Cherry Cream Soda' => 'Cherry Cream Soda', 'Lobster Two' => 'Lobster Two', 'Righteous' => 'Righteous', 'Squada One' => 'Squada One', 'Black Ops One' => 'Black Ops One', 'Happy Monkey' => 'Happy Monkey', 'Passion One' => 'Passion One', 'Nova Square' => 'Nova Square', 'Metamorphous' => 'Metamorphous', 'Poiret One' => 'Poiret One', 'Bevan' => 'Bevan', 'Shadows Into Light' => 'Shadows Into Light', 'The Girl Next Door' => 'The Girl Next Door', 'Coming Soon' => 'Coming Soon', 'Dancing Script' => 'Dancing Script', 'Pacifico' => 'Pacifico', 'Crafty Girls' => 'Crafty Girls', 'Calligraffitti' => 'Calligraffitti', 'Rock Salt' => 'Rock Salt', 'Amatic SC' => 'Amatic SC', 'Leckerli One' => 'Leckerli One', 'Tangerine' => 'Tangerine', 'Reenie Beanie' => 'Reenie Beanie', 'Satisfy' => 'Satisfy', 'Gloria Hallelujah' => 'Gloria Hallelujah', 'Permanent Marker' => 'Permanent Marker', 'Covered By Your Grace' => 'Covered By Your Grace', 'Walter Turncoat' => 'Walter Turncoat', 'Patrick Hand' => 'Patrick Hand', 'Schoolbell' => 'Schoolbell', 'Indie Flower' => 'Indie Flower' );
     return $google_fonts;
+  }
+
+  /**
+   * Get google fonts used in themes and options.
+   *
+   * @return string
+   */
+
+  public static function get_all_used_google_fonts() {
+    global $wpdb;
+    $url = '';
+    $google_array = array();
+    $google_fonts = self::get_google_fonts();
+    $sql = 'SELECT `fmt`.`css` FROM `' . $wpdb->prefix . 'formmaker` fm
+			INNER JOIN `' . $wpdb->prefix . 'formmaker_themes` fmt ON (`fm`.`theme` = `fmt`.`id`)
+			GROUP BY `fmt`.`id`';
+    $results = $wpdb->get_results($sql, 'OBJECT');
+    if ( $results ) {
+      foreach ( $results as $row ) {
+        if ( isset($row->css) ) {
+          $options = json_decode($row->css);
+          if ( !empty($options) ) {
+
+            foreach ( $options as $option ) {
+              $is_google_fonts = in_array((string) $option, $google_fonts) ? TRUE : FALSE;
+              if ( TRUE == $is_google_fonts ) {
+                $google_array[$option] = $option;
+              }
+            }
+          }
+        }
+      }
+    }
+    if ( !empty($google_array) ) {
+      $query = implode("|", str_replace(' ', '+', $google_array));
+      $url = 'https://fonts.googleapis.com/css?family=' . $query;
+      $url .= '&subset=greek,latin,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic';
+    }
+
+    return $url;
   }
 
   public static function cleanData( &$str ) {
@@ -4651,6 +4691,7 @@ class WDW_FM_Library {
       "Solomon Islands" => __("Solomon Islands", WDFMInstance(self::PLUGIN)->prefix),
       "Somalia" => __("Somalia", WDFMInstance(self::PLUGIN)->prefix),
       "South Africa" => __("South Africa", WDFMInstance(self::PLUGIN)->prefix),
+      "South Sudan" => __("South Sudan", WDFMInstance(self::PLUGIN)->prefix),
       "Spain" => __("Spain", WDFMInstance(self::PLUGIN)->prefix),
       "Sri Lanka" => __("Sri Lanka", WDFMInstance(self::PLUGIN)->prefix),
       "Sudan" => __("Sudan", WDFMInstance(self::PLUGIN)->prefix),
@@ -4875,7 +4916,7 @@ class WDW_FM_Library {
       //            $from_str .= "<" . $from . ">";
       //            $headers[] = $from_str;
       self::$email_from = $from;
-      if ( self::email_validation( $from ) ) {
+      if ( self::is_email( $from ) ) {
         add_filter('wp_mail_from', array('WDW_FM_Library', 'mail_from'));
       }
     }
@@ -4896,7 +4937,7 @@ class WDW_FM_Library {
       $reply_to = $header_arr['reply_to'];
       $reply_to = trim($reply_to);
       $reply_to = trim($reply_to, ',');
-      if ( self::email_validation( $reply_to ) ) {
+      if ( self::is_email( $reply_to ) ) {
         $headers[] = "Reply-To: <" . $reply_to . ">";
       }
     }
@@ -5574,12 +5615,14 @@ class WDW_FM_Library {
     return $forms;
   }
 
-  public function email_validation($email) {
-      if( $email != '' &&  preg_match('/^[a-zA-Z\x{0400}-\x{04FF}0-9.+_-]+@[a-zA-Z\x{0400}-\x{04FF}0-9.-]+\.[a-zA-Z\x{0400}-\x{04FF}]{2,61}$/u', $email ) ) {
-          return true;
-      } else {
-          return false;
+  public static function is_email( $email ) {
+    if ( $email != '' ) {
+      if ( !preg_match('/^[a-zA-Z\x{0400}-\x{04FF}0-9.+_-]+@[a-zA-Z\x{0400}-\x{04FF}0-9.-]+\.[a-zA-Z\x{0400}-\x{04FF}]{2,61}$/u', $email) ) {
+        return FALSE;
       }
+    }
+
+    return TRUE;
   }
 
   /**
@@ -5591,4 +5634,37 @@ class WDW_FM_Library {
 
     return $types;
   }
+  public static function set_exclude_placeholder( $params = array() ) {
+    $str = '';
+    if ( !empty($params) ) {
+      $str = 'data-exclude-placeholder=\'' . json_encode($params) . '\'';
+    }
+    return $str;
+  }
+  /**
+   * Get custom fields
+   * @return array
+   */
+  public static function get_custom_fields() {
+    $userid = '';
+    $username = '';
+    $useremail = '';
+    $adminemail = get_option( 'admin_email' );
+    $current_user = wp_get_current_user();
+    if ( $current_user->ID != 0 ) {
+      $userid = $current_user->ID;
+      $username = $current_user->display_name;
+      $useremail = $current_user->user_email;
+    }
+    $custom_fields = array(
+      "ip" => $_SERVER['REMOTE_ADDR'],
+      "userid" => $userid,
+      'adminemail' => $adminemail,
+      "useremail" => $useremail,
+      "username" => $username
+    );
+    return $custom_fields;
+  }
+
+
 }

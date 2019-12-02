@@ -73,6 +73,7 @@ class FMControllerForm_maker {
       if ( !$result ) {
         return;
       }
+      $result[0]->fm_ajax_submit = isset($fm_settings['fm_ajax_submit']) ? $fm_settings['fm_ajax_submit'] : 0;
       $this->model->savedata($result[0], $id);
 
       return $this->view->display($result, $fm_settings, $id, $type);

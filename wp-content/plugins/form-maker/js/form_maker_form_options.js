@@ -230,7 +230,14 @@ function fm_add_inline_email_validation_message(obj) {
 function fm_placeholders_popup(input_id) {
   var active_input = jQuery('#' + input_id);
   var active_input_container = active_input.closest('.wd-group');
-  active_input_container.addClass('placeholders-active');
+      active_input_container.addClass('placeholders-active');
+  var exclude = active_input_container.data('exclude-placeholder');
+  jQuery('.fm-placeholder-item').show();
+  if ( exclude && exclude.length > 1 ) {
+    jQuery.each(exclude, function(i, placeholder) {
+      jQuery('#fm-placeholder-'+ placeholder).hide();
+    });
+  }
   jQuery('html').animate({scrollTop: active_input_container.offset().top - 50}, 500);
   var popup = jQuery('.placeholder-popup');
   active_input_container.prepend(jQuery('#placeholders_overlay'));

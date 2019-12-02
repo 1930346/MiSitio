@@ -10,7 +10,7 @@ class FMViewThemes_fm extends FMAdminView {
 		wp_enqueue_script(WDFMInstance(self::PLUGIN)->handle_prefix . '-admin');
 	}
 	else {
-		if ( WDW_FM_Library(self::PLUGIN)->get('task') != 'edit' ) {
+		if ( WDW_FM_Library(self::PLUGIN)->get('task','','sanitize_text_field') != 'edit' ) {
 			wp_enqueue_style(WDFMInstance(self::PLUGIN)->handle_prefix . '-styles');
 			wp_enqueue_script(WDFMInstance(self::PLUGIN)->handle_prefix . '-scripts');
 		}
@@ -208,8 +208,8 @@ class FMViewThemes_fm extends FMAdminView {
 		$tabs = $params['tabs'];
 		$all_params = $params['all_params'];
 
-		$active_tab = WDW_FM_Library(self::PLUGIN)->get('active_tab', ($row->version == 1 ? 'custom_css' : 'global'));
-		$pagination = WDW_FM_Library(self::PLUGIN)->get('pagination', 'none');
+		$active_tab = WDW_FM_Library(self::PLUGIN)->get('active_tab', ($row->version == 1 ? 'custom_css' : 'global'), 'sanitize_text_field');
+		$pagination = WDW_FM_Library(self::PLUGIN)->get('pagination', 'none', 'sanitize_text_field');
 		?>
 		<div ng-app="ThemeParams" class="fm-table">
 			<div ng-controller="FMTheme">

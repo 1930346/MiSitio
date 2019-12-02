@@ -310,7 +310,15 @@ class  FMViewSubmissions_fm extends FMAdminView {
 						  <span class="sorting-indicator"></span>
 						</a>
 					</th>
-					<?php
+          <?php
+          if( !empty($params['webhook_data']) && gettype($params['webhook_data']) == 'array' ) {
+            ?>
+            <th scope="col" id="webhook_fc" class="webhook_fc sortable">
+              <span><?php _e('Webhook Status', WDFMInstance(self::PLUGIN)->prefix);?></span>
+            </th>
+            <?php
+          }
+
 					  $stripe_paypal = false;
 					  for ( $i = 0; $i < count($sorted_label_names); $i++ ) {
 						$styleStr = $this->model->hide_or_not($lists['hide_label_list'], $sorted_labels_id[$i]);
@@ -545,7 +553,34 @@ class  FMViewSubmissions_fm extends FMAdminView {
 							<td id="submitteremail_fc" class="table_large_col submitteremail_fc sub-align" <?php echo $style_useremail; ?> data-colname="<?php _e('Submitter\'s Email Address', WDFMInstance(self::PLUGIN)->prefix);?>">
 								<p><?php echo $useremail; ?></p>
 							</td>
-							<?php
+              <?php
+              if( !empty($params['webhook_data']) && gettype($params['webhook_data']) == 'array' ) {
+              ?>
+                <td id="webhook_fc" class="table_large_col webhook_fc sub-align" data-colname="<?php _e('Webhook Status', WDFMInstance(self::PLUGIN)->prefix);?>">
+                    <?php
+                    if( isset($params['webhook_data'][$data->group_id]) && $params['webhook_data'][$data->group_id] ) {
+                      echo '<div class="fm_wh_status_row"><p>' .  __('Successfully Sent', WDFMInstance(self::PLUGIN)->prefix). '</p></div>';
+                    }
+                    elseif ( isset($params['webhook_data'][$data->group_id]) && !$params['webhook_data'][$data->group_id] ) {
+                    ?>
+                      <div class="fm_wh_status_row">
+                        <p><?php echo __('Failed', WDFMInstance(self::PLUGIN)->prefix); ?></p>
+                        <p>|</p>
+                        <p>
+                          <a href="#" onclick="fm_wh_resend(this); return false" data-form_id = "<?php echo $form_id; ?>" data-group_id = "<?php echo $data->group_id; ?>" data-formtitle = "<?php echo $params['forms'][$form_id]->title; ?>">
+                            <?php _e('Resend', WDFMInstance(self::PLUGIN)->prefix); ?>
+                            <img src="<?php echo WDFMInstance(self::PLUGIN)->plugin_url ?>/images/arrow_right.svg" alt="">
+                          </a>
+                        </p>
+                        <span class="fm_wh_spinner hidden"></span>
+                      </div>
+                    <?php
+                    }
+                    ?>
+                </td>
+              <?php
+              }
+
 							for ( $h = 0; $h < $m; $h++ ) {
 							  $ispaypal = false;
 							  if ( $sorted_label_types[$h] == 'type_stripe' ) {
@@ -702,7 +737,8 @@ class  FMViewSubmissions_fm extends FMAdminView {
 							</td>
 						  <?php
 						}
-						?>
+
+              ?>
 					  </tr>
 					  <?php
 					  $k = 1 - $k;
@@ -835,7 +871,7 @@ class  FMViewSubmissions_fm extends FMAdminView {
 				  }
 				}
 			  }
-			}
+      }
 			renderColumns();
 		}
 	</script>
@@ -876,6 +912,16 @@ class  FMViewSubmissions_fm extends FMAdminView {
       </div>
       <?php
     }
+    if ( !empty($params['webhook_data']) && gettype($params['webhook_data']) == 'array' ) {
+      ?>
+      <div class="fm_check_labels">
+        <input type="checkbox" onclick="clickLabChB('webhook', this)" id="fm_check_webhook" <?php echo (strpos($lists['hide_label_list'], '@webhook@') === FALSE) ? 'checked="checked"' : ''; ?> />
+        <label for="fm_check_webhooko"><?php _e('Webhook Status', WDFMInstance(self::PLUGIN)->prefix); ?></label>
+      </div>
+
+      <?php
+    }
+
     ?>
     <div class="done-cont">
       <button onclick="toggleChBDiv(false); return false;" class="button button-primary"><?php _e('Done', WDFMInstance(self::PLUGIN)->prefix); ?></button>

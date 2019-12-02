@@ -3,7 +3,7 @@ Contributors: webdorado,10web,wdsupport,formmakersupport
 Tags:  form, forms, form builder, contact form, feedback, custom form, contact, web contact form, captcha, email, form manager, survey
 Requires at least: 4.6
 Tested up to: 5.3
-Stable tag: 1.13.22
+Stable tag: 1.13.24
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -561,6 +561,19 @@ Where **{{field_id}}** is the ID of the field you wish to prefill. Also, **{{par
 
 
 == Changelog ==
+
+= 1.13.24 =
+*	Fixed: Minor bug.
+
+= 1.13.23 =
+*  Added: Flush Rewrite Rules for multisite.
+*  Added: South Sudan to Address and Country List fields.
+*  Improved: Include Google Fonts only if used by a form on that page.
+*  Fixed: + sign in Regular Expressions.
+*  Fixed: Recaptcha with AJAX submit.
+*  Fixed: Row maximum width.
+*  Fixed: Placeholder text color.
+*  Fixed: PHP validation issue on an empty non-required email field.
 
 = 1.13.22 =
 *  Added: New Extension: Form Maker Webhooks.

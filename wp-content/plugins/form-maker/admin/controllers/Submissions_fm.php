@@ -210,8 +210,8 @@ class FMControllerSubmissions_fm extends FMAdminController {
 		$params['style_ip'] = $this->model->hide_or_not($lists['hide_label_list'], '@submitterip@');
 		$params['style_username'] = $this->model->hide_or_not($lists['hide_label_list'], '@submitterusername@');
 		$params['style_useremail'] = $this->model->hide_or_not($lists['hide_label_list'], '@submitteremail@');
-		$params['style_payment_info'] = $this->model->hide_or_not($lists['hide_label_list'], '@payment_info@');   
-	
+		$params['style_payment_info'] = $this->model->hide_or_not($lists['hide_label_list'], '@payment_info@');
+
 		$params['oder_class_default'] = "manage-column column-autor sortable desc";
 		$params['oder_class'] = "manage-column column-autor column-title sorted " . $params['asc_or_desc'];
 		$params['m'] = count($params['sorted_label_names']);
@@ -285,7 +285,8 @@ class FMControllerSubmissions_fm extends FMAdminController {
 			require_once(WD_FM_PDF_DIR . '/model.php');	
 			$params['pdf_data'] = WD_FM_PDF_model::get_pdf_data( $id );
 		}
-		
+
+    $params['webhook_data'] = apply_filters( 'fmwh_webhook_status', $params['id'] );
 		$this->view->display($params);
 	}
 

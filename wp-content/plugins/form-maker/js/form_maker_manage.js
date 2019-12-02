@@ -159,7 +159,14 @@ function refresh_() {
   });
   jQuery("#take div").removeClass("ui-sortable ui-sortable-disabled ui-sortable-handle");
 	jQuery( "#add_field_cont" ).remove(); // remove add new button from div content
-	document.getElementById('form_front').value = btoa(encodeURI(document.getElementById('take').innerHTML));
+	document.getElementById('form_front').value = btoa(fm_htmlentities(document.getElementById('take').innerHTML));
+}
+function fm_htmlentities(s){
+  var div = document.createElement('div');
+  var text = document.createTextNode(s);
+  div.style.cssText = "display:none";
+  div.appendChild(text);
+  return div.innerHTML;
 }
 
 function fm_add_submission_email(toAdd_id, value_id, parent_id, cfm_url) {
